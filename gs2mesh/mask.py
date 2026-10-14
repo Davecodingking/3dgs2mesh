@@ -1,10 +1,23 @@
-# Step mask: SAM3 on the view image. The object: text prompt; of the instances found, the one under the click when the
-# object has one (the page's "click the object"), else the most confident -> mask_base.png. Then what lies on it (parts:
-# pillow, blanket ...; see common.add_parts) -> mask_final.png. Without parts mask_final = mask_base.
+# Step mask: SAM3 on the view image. The object: text prompt; of the instances found, the one at the click when the object
+# has one (the page's "click the object": inside its outline, holes included, or within 30 px), else the most confident
+# -> mask_base.png. Then what lies on it (parts: pillow, blanket ...; see common.add_parts) -> mask_final.png. Without
+# parts mask_final = mask_base.
 # Also writes per instance mask_<prompt>_<id>.png, overlay_<prompt>.jpg and mask_<prompt>.json; overlay_final.jpg
 # (object green, added parts orange) and mask_parts.json.
 import sys, json, numpy as np, cv2
 from .common import sam3, OneImage, add_parts
+
+
+CLICK_PX = 30                                                 # a click this close to an instance still picks it
+
+
+def click_dist(m, u, v):
+    """Pixels from (u, v) to mask m with its holes filled (0 inside): SAM3 leaves a hole where a cushion lies on the object."""
+    filled = m.astype(np.uint8).copy(); ff = np.zeros((m.shape[0] + 2, m.shape[1] + 2), np.uint8)
+    cv2.floodFill(filled, ff, (0, 0), 2); filled = filled != 2                 # assumes the corner is background
+    if 0 <= v < m.shape[0] and 0 <= u < m.shape[1] and filled[v, u]: return 0.0
+    ys, xs = np.nonzero(filled)
+    return float(np.sqrt((xs - u) ** 2 + (ys - v) ** 2).min()) if len(xs) else np.inf
 
 
 def tint(img, m, bgr): img[m] = (0.5 * img[m] + 0.5 * np.array(bgr)).astype(np.uint8)
@@ -28,9 +41,9 @@ def run(c):
     if not found: sys.exit(f"[mask] SAM3 found nothing for '{c.prompt}'")
     if c.click:
         u, v = (int(round(x)) for x in c.click)
-        hit = [x for x in found if 0 <= v < x[1].shape[0] and 0 <= u < x[1].shape[1] and x[1][v, u]]
-        if not hit: sys.exit(f"[mask] 点的位置没找到物体: none of the {len(found)} '{c.prompt}' instance(s) covers pixel ({u}, {v})")
-        best = max(hit, key=lambda x: x[2]); how = f"under the click ({u}, {v})"
+        d = [click_dist(m, u, v) for _, m, _ in found]
+        if min(d) > CLICK_PX: sys.exit(f"[mask] 点的位置没找到物体: none of the {len(found)} '{c.prompt}' instance(s) is within {CLICK_PX} px of ({u}, {v})")
+        best = min(zip(found, d), key=lambda x: (x[1], -x[0][2]))[0]; how = f"nearest to the click ({u}, {v})"
     else:
         best = max(found, key=lambda x: x[2]); how = "most confident"
     base = best[1]

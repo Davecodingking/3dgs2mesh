@@ -264,10 +264,10 @@ def cmd_compose(a): sys.exit(compose(a.scene))
 
 
 def cmd_remove(a):
-    sc, _ = find(a.run)
+    sc, o = find(a.run); was_in = composable(o)
     edit_objects(sc["id"], lambda objs: objs.__setitem__(slice(None), [x for x in objs if x["run"] != a.run]))
     log(f"{a.run} taken out of {sc['id']} (runs/{a.run} stays)")
-    sys.exit(compose(sc["id"]))
+    if was_in: sys.exit(compose(sc["id"]))                  # never generated / carved: the composed scene is unchanged
 
 
 def main():
