@@ -1,5 +1,5 @@
 # data and outputs stay local
-物品摆放测试/
+物品摆放测试
 runs/
 # the colleague's original placement code (place.py is our Python port); not ours to publish
 place.mjs
