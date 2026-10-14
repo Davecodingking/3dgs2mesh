@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3DGS 替换预览</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+  #ui { position: fixed; top: 12px; left: 12px; color: #eee; background: rgba(0, 0, 0, .6); padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.7; }
+  #ui a { color: #8cf; margin-right: 10px; }
+  #ui a.on { color: #fff; font-weight: bold; text-decoration: none; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./lib/three.module.js",
+  "three/addons/": "./lib/addons/",
+  "@mkkellogg/gaussian-splats-3d": "./lib/gaussian-splats-3d.module.js"
+} }
+</script>
+</head>
+<body>
+<div id="ui">
+  <div><a id="m-rep" href="?mode=replaced">替换后（3DGS + 网格）</a><a id="m-orig" href="?mode=orig">原来的 3DGS</a><a id="m-mesh" href="?mode=mesh">只看网格</a></div>
+  <div>左键拖动：转 · 滚轮：远近 · 右键拖动：平移 · R：回到拍摄位置</div>
+  <div id="status">加载中…</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as GS from '@mkkellogg/gaussian-splats-3d';
+
+const q = new URLSearchParams(location.search);
+const dir = q.get('dir') || '../runs/A01_compose';
+const mode = q.get('mode') || 'replaced';                     // replaced | orig | mesh
+document.getElementById({ replaced: 'm-rep', orig: 'm-orig', mesh: 'm-mesh' }[mode]).className = 'on';
+for (const a of document.querySelectorAll('#ui a')) a.href += `&dir=${encodeURIComponent(dir)}`;
+const status = document.getElementById('status');
+
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 100);
+
+// The 3DGS and the meshes are in the OpenCV world (x right, y down, z forward, panorama camera at the origin).
+// three.js is y up: turn everything 180 deg about x.
+const flip = new THREE.Group(); flip.rotation.x = Math.PI; scene.add(flip);
+const objs = await (await fetch(`${dir}/objects.json`)).json();
+const target = new THREE.Vector3(...objs.target).applyEuler(new THREE.Euler(Math.PI, 0, 0));
+const controls = new OrbitControls(camera, renderer.domElement);
+const home = () => {                                          // stand at the panorama camera, a little behind it
+  const dirToTarget = target.clone().normalize();
+  camera.position.copy(dirToTarget.multiplyScalar(-0.05));
+  controls.target.copy(target); controls.update();
+};
+home();
+addEventListener('keydown', (e) => { if (e.key === 'r' || e.key === 'R') home(); });
+
+if (mode !== 'mesh') {
+  const splat = new GS.DropInViewer({ sharedMemoryForWorkers: false, gpuAcceleratedSort: false });
+  splat.addSplatScene(`${dir}/${mode === 'orig' ? 'orig' : 'scene'}.splat`,
+                      { rotation: [1, 0, 0, 0], showLoadingUI: true, splatAlphaRemovalThreshold: 5 });
+  scene.add(splat);
+}
+if (mode !== 'orig') {
+  const loader = new GLTFLoader();
+  for (const o of objs.objects) {
+    const g = await loader.loadAsync(`${dir}/${o.glb}`);
+    g.scene.traverse((m) => {                                 // unlit: the texture is baked from the photo already
+      if (!m.isMesh) return;
+      const old = m.material;
+      m.material = new THREE.MeshBasicMaterial({ map: old.map || null, color: old.map ? 0xffffff : (old.color || 0xffffff), side: THREE.DoubleSide });
+    });
+    flip.add(g.scene);
+  }
+}
+status.textContent = `物体：${objs.objects.map((o) => o.name).join('、')}`;
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+});
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>
+</body>
+</html>

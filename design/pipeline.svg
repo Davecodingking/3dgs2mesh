@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1350" viewBox="0 0 1100 1350"
+     font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Noto Sans SC, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="1100" height="1350" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="60" y="42" font-size="22" font-weight="bold" fill="#1d2a30">3DGS 物体换成 SAM 3D 网格 · 第 1 块：一次换一个物体</text>
+  <text x="60" y="64" font-size="13" fill="#777">初步设计 · 2026-10-14 · 拿 A01 书房的绿色沙发先试</text>
+
+  <!-- inputs -->
+  <rect x="60" y="84" width="300" height="62" rx="8" fill="#f4f4f4" stroke="#777"/>
+  <text x="76" y="110" font-size="16" font-weight="bold" fill="#333">全景图 pano.jpg</text>
+  <text x="76" y="132" font-size="13" fill="#666">→ 第 1 步</text>
+  <rect x="400" y="84" width="300" height="62" rx="8" fill="#f4f4f4" stroke="#777"/>
+  <text x="416" y="110" font-size="16" font-weight="bold" fill="#333">物体名字</text>
+  <text x="416" y="132" font-size="13" fill="#666">例：green armchair · → 第 2 步</text>
+  <rect x="740" y="84" width="300" height="62" rx="8" fill="#f4f4f4" stroke="#777"/>
+  <text x="756" y="110" font-size="16" font-weight="bold" fill="#333">3DGS 场景 .ply</text>
+  <text x="756" y="132" font-size="13" fill="#666">→ 第 4、7 步（取点、删点）</text>
+  <line x1="210" y1="146" x2="210" y2="168" stroke="#555" stroke-width="1.5"/>
+  <line x1="210" y1="168" x2="380" y2="168" stroke="#555" stroke-width="1.5"/>
+  <line x1="380" y1="168" x2="380" y2="188" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 1: new -->
+  <rect x="60" y="190" width="640" height="70" rx="10" fill="#eef6ee" stroke="#3f8a4a" stroke-width="1.5"/>
+  <circle cx="88" cy="222" r="16" fill="#3f8a4a"/><text x="88" y="228" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">1</text>
+  <text x="116" y="218" font-size="18" font-weight="bold" fill="#1d2a30">切图</text>
+  <text x="688" y="212" font-size="12" fill="#3f8a4a" text-anchor="end">新写</text>
+  <text x="688" y="232" font-size="12" fill="#2e7d32" text-anchor="end" font-weight="bold">✓ 已跑通</text>
+  <text x="116" y="244" font-size="14" fill="#333">从全景图切一张正对物体的普通视角图（相机和 3DGS 已核对对齐）</text>
+  <line x1="380" y1="260" x2="380" y2="286" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 2: ours (SAM3) -->
+  <rect x="60" y="288" width="640" height="70" rx="10" fill="#e8f1fb" stroke="#2f6db5" stroke-width="1.5"/>
+  <circle cx="88" cy="320" r="16" fill="#2f6db5"/><text x="88" y="326" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">2</text>
+  <text x="116" y="316" font-size="18" font-weight="bold" fill="#1d2a30">抠图</text>
+  <text x="688" y="310" font-size="12" fill="#2f6db5" text-anchor="end">我们流程里的 SAM3</text>
+  <text x="688" y="330" font-size="12" fill="#2e7d32" text-anchor="end" font-weight="bold">✓ 已跑通</text>
+  <text x="116" y="342" font-size="14" fill="#333">按提示词抠出物体；压在上面的靠垫、毯子再抠一次并进来</text>
+  <line x1="380" y1="358" x2="380" y2="384" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 3: ours (SAM 3D) -->
+  <rect x="60" y="386" width="640" height="70" rx="10" fill="#e8f1fb" stroke="#2f6db5" stroke-width="1.5"/>
+  <circle cx="88" cy="418" r="16" fill="#2f6db5"/><text x="88" y="424" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">3</text>
+  <text x="116" y="414" font-size="18" font-weight="bold" fill="#1d2a30">生成</text>
+  <text x="688" y="408" font-size="12" fill="#2f6db5" text-anchor="end">我们流程里的 SAM 3D</text>
+  <text x="688" y="428" font-size="12" fill="#2e7d32" text-anchor="end" font-weight="bold">✓ 已跑通</text>
+  <text x="116" y="440" font-size="14" fill="#333">用切图 + 抠图生成带贴图的网格，同时存下 SAM 3D 判断的朝向</text>
+  <line x1="380" y1="456" x2="380" y2="482" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 4: new -->
+  <rect x="60" y="484" width="640" height="90" rx="10" fill="#eef6ee" stroke="#3f8a4a" stroke-width="1.5"/>
+  <circle cx="88" cy="516" r="16" fill="#3f8a4a"/><text x="88" y="522" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">4</text>
+  <text x="116" y="512" font-size="18" font-weight="bold" fill="#1d2a30">取点</text>
+  <text x="688" y="506" font-size="12" fill="#3f8a4a" text-anchor="end">新写</text>
+  <text x="688" y="526" font-size="12" fill="#c76b12" text-anchor="end" font-weight="bold">正在做</text>
+  <text x="116" y="538" font-size="14" fill="#333">3DGS 的点投到切图上，落在抠图里、最前面那一层 = 原物体看得见的表面</text>
+  <text x="116" y="560" font-size="14" fill="#666">（替换同事代码里的方框）</text>
+  <line x1="380" y1="574" x2="380" y2="600" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 5: ours (VLM) -->
+  <rect x="60" y="602" width="640" height="70" rx="10" fill="#e8f1fb" stroke="#2f6db5" stroke-width="1.5"/>
+  <circle cx="88" cy="634" r="16" fill="#2f6db5"/><text x="88" y="640" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">5</text>
+  <text x="116" y="630" font-size="18" font-weight="bold" fill="#1d2a30">判断放在哪</text>
+  <text x="688" y="624" font-size="12" fill="#2f6db5" text-anchor="end">我们流程里的 VLM</text>
+  <text x="116" y="656" font-size="14" fill="#333">地上 / 桌上 / 挂着（沙发这次先手填：地上）</text>
+  <line x1="380" y1="672" x2="380" y2="698" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 6: his + ours -->
+  <rect x="60" y="700" width="640" height="110" rx="10" fill="#fdf0e2" stroke="#c76b12" stroke-width="1.5"/>
+  <rect x="64" y="704" width="632" height="102" rx="8" fill="none" stroke="#2f6db5" stroke-width="1" stroke-dasharray="5 4"/>
+  <circle cx="88" cy="732" r="16" fill="#c76b12"/><text x="88" y="738" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">6</text>
+  <text x="116" y="728" font-size="18" font-weight="bold" fill="#1d2a30">摆放</text>
+  <text x="688" y="722" font-size="12" fill="#c76b12" text-anchor="end">同事的 mjs + 我们的落地判断</text>
+  <text x="688" y="742" font-size="12" fill="#c76b12" text-anchor="end" font-weight="bold">正在做</text>
+  <text x="116" y="756" font-size="14" fill="#333">先用 SAM 3D 的朝向，再调朝向、大小、左右、前后四个量，</text>
+  <text x="116" y="776" font-size="14" fill="#333">直到网格表面贴住第 4 步的点；</text>
+  <text x="116" y="796" font-size="14" fill="#333">落地按第 5 步：地上→地面，桌上→桌面，挂着→不落地</text>
+  <line x1="380" y1="810" x2="380" y2="836" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 7: his -->
+  <rect x="60" y="838" width="640" height="70" rx="10" fill="#fdf0e2" stroke="#c76b12" stroke-width="1.5"/>
+  <circle cx="88" cy="870" r="16" fill="#c76b12"/><text x="88" y="876" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">7</text>
+  <text x="116" y="866" font-size="18" font-weight="bold" fill="#1d2a30">删点</text>
+  <text x="688" y="860" font-size="12" fill="#c76b12" text-anchor="end">同事的 mjs</text>
+  <text x="116" y="892" font-size="14" fill="#333">按摆好的网格占的范围（留一点余量）删掉原物体的点，地面保留</text>
+  <line x1="380" y1="908" x2="380" y2="934" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- step 8: new -->
+  <rect x="60" y="936" width="640" height="90" rx="10" fill="#eef6ee" stroke="#3f8a4a" stroke-width="1.5"/>
+  <circle cx="88" cy="968" r="16" fill="#3f8a4a"/><text x="88" y="974" font-size="16" fill="#fff" text-anchor="middle" font-weight="bold">8</text>
+  <text x="116" y="964" font-size="18" font-weight="bold" fill="#1d2a30">检查</text>
+  <text x="688" y="958" font-size="12" fill="#3f8a4a" text-anchor="end">新写</text>
+  <text x="116" y="990" font-size="14" fill="#333">删过点的 3DGS 和网格一起渲染，和原图并排比；</text>
+  <text x="116" y="1012" font-size="14" fill="#333">给出数字：轮廓重合度、贴合误差</text>
+
+  <!-- outputs -->
+  <line x1="380" y1="1026" x2="380" y2="1046" stroke="#555" stroke-width="1.5"/>
+  <line x1="210" y1="1046" x2="890" y2="1046" stroke="#555" stroke-width="1.5"/>
+  <line x1="210" y1="1046" x2="210" y2="1062" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="550" y1="1046" x2="550" y2="1062" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="890" y1="1046" x2="890" y2="1062" stroke="#555" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="60" y="1064" width="300" height="62" rx="8" fill="#f4f4f4" stroke="#777"/>
+  <text x="76" y="1090" font-size="16" font-weight="bold" fill="#333">背景 3DGS</text>
+  <text x="76" y="1112" font-size="13" fill="#666">删过点的 .ply</text>
+  <rect x="400" y="1064" width="300" height="62" rx="8" fill="#f4f4f4" stroke="#777"/>
+  <text x="416" y="1090" font-size="16" font-weight="bold" fill="#333">物体网格</text>
+  <text x="416" y="1112" font-size="13" fill="#666">.glb，和 3DGS 同一个坐标</text>
+  <rect x="740" y="1064" width="300" height="62" rx="8" fill="#f4f4f4" stroke="#777"/>
+  <text x="756" y="1090" font-size="16" font-weight="bold" fill="#333">变换参数</text>
+  <text x="756" y="1112" font-size="13" fill="#666">.json（朝向、大小、位置）</text>
+
+  <!-- right side: checkpoints -->
+  <line x1="700" y1="323" x2="738" y2="323" stroke="#b4233c" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="740" y="294" width="300" height="58" rx="10" fill="#fde8ec" stroke="#b4233c" stroke-width="1.5"/>
+  <text x="756" y="318" font-size="15" font-weight="bold" fill="#b4233c">检查点①：人看一眼</text>
+  <text x="756" y="340" font-size="14" fill="#333">抠得对不对</text>
+  <line x1="700" y1="421" x2="738" y2="421" stroke="#b4233c" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="740" y="392" width="300" height="58" rx="10" fill="#fde8ec" stroke="#b4233c" stroke-width="1.5"/>
+  <text x="756" y="416" font-size="15" font-weight="bold" fill="#b4233c">检查点②：人看一眼</text>
+  <text x="756" y="438" font-size="14" fill="#333">生成得像不像</text>
+
+  <!-- right side: notes -->
+  <rect x="740" y="494" width="300" height="70" rx="10" fill="#fffbe6" stroke="#b59a00"/>
+  <text x="756" y="520" font-size="15" font-weight="bold" fill="#7a6400">全程固定脚本，不用 agent</text>
+  <text x="756" y="544" font-size="14" fill="#333">人只在检查点①②各看一眼</text>
+  <rect x="740" y="700" width="300" height="128" rx="10" fill="#fffbe6" stroke="#b59a00"/>
+  <text x="756" y="728" font-size="15" font-weight="bold" fill="#7a6400">没有"量盒子"这一步</text>
+  <text x="756" y="754" font-size="14" fill="#333">原流程靠点云围盒子来摆，这里不用。</text>
+  <text x="756" y="778" font-size="14" fill="#333">第 7 步的盒子是按摆好的网格算的，</text>
+  <text x="756" y="802" font-size="14" fill="#333">只用来圈出要删的点。</text>
+
+  <!-- later -->
+  <rect x="60" y="1168" width="480" height="100" rx="10" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="76" y="1196" font-size="16" font-weight="bold" fill="#666">以后再做 · 第 2 块：自动找物体</text>
+  <text x="76" y="1222" font-size="14" fill="#666">VLM 列物体 → 多张切图 → SAM3 抠图 → 去重 → 网页上挑</text>
+  <text x="76" y="1246" font-size="14" fill="#666">以后替换"物体名字"这个输入</text>
+  <rect x="580" y="1168" width="460" height="100" rx="10" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="596" y="1196" font-size="16" font-weight="bold" fill="#666">以后再做 · 第 3 块：交付和查看</text>
+  <text x="596" y="1222" font-size="14" fill="#666">3DGS 和网格放在一起看</text>
+  <text x="596" y="1246" font-size="14" fill="#666">删掉物体后露出的空洞要不要补</text>
+
+  <!-- legend -->
+  <rect x="60" y="1298" width="16" height="16" rx="3" fill="#e8f1fb" stroke="#2f6db5"/>
+  <text x="84" y="1311" font-size="13" fill="#333">我们流程里现成的</text>
+  <rect x="210" y="1298" width="16" height="16" rx="3" fill="#fdf0e2" stroke="#c76b12"/>
+  <text x="234" y="1311" font-size="13" fill="#333">同事的 mjs</text>
+  <rect x="330" y="1298" width="16" height="16" rx="3" fill="#eef6ee" stroke="#3f8a4a"/>
+  <text x="354" y="1311" font-size="13" fill="#333">新写</text>
+  <rect x="410" y="1298" width="16" height="16" rx="3" fill="#fde8ec" stroke="#b4233c"/>
+  <text x="434" y="1311" font-size="13" fill="#333">人看一眼</text>
+  <text x="520" y="1311" font-size="13" fill="#2e7d32" font-weight="bold">✓ 已跑通</text>
+  <text x="584" y="1311" font-size="13" fill="#333">= 已在 A01 沙发上跑过</text>
+</svg>
