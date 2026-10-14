@@ -20,7 +20,7 @@ export function setupAdd({ sceneId, side, setGS, showMeshes }) {
     if (!on) return;
     const { s, x0, y0, r } = square();
     Object.assign(frame.style, { left: `${r.left + x0}px`, top: `${r.top + y0}px`, width: `${s}px`, height: `${s}px` });
-    panel.style.top = `${belowBar()}px`;
+    const top = belowBar(); panel.style.top = `${top}px`; panel.style.maxHeight = `${innerHeight - top - 12}px`;
   }
   resized(layout);
 
@@ -95,8 +95,8 @@ export function setupAdd({ sceneId, side, setGS, showMeshes }) {
       cam: serverCam(), click: [Math.round((px - x0) * S / s), Math.round((py - y0) * S / s)],
     };
     if (!run) fields.name = uniqueName(prompt);
-    busy = true; goBtn.style.display = 'none'; img.style.display = 'none';
-    say(`${pano ? '从全景照片裁图' : '从 3DGS 渲染'}，再用 SAM3 抠图，要几十秒…`);
+    busy = true; goBtn.style.display = 'none'; img.style.display = 'none'; $('aCancel').disabled = true;
+    say(`${pano ? '从全景照片裁图' : '从 3DGS 渲染'}，再用 SAM3 抠图，要几十秒…（这时不能取消）`);
     try {
       const j = await post(`/api/object?scene=${sceneId}` + (run ? `&run=${run}` : ''), fields);
       if (!run) mine = true;
@@ -105,9 +105,11 @@ export function setupAdd({ sceneId, side, setGS, showMeshes }) {
       say('黄色是抠出来的物体。对的话点"开始生成"；不对就改词或换个位置，在框里重新点。');
     } catch (err) {
       if (err.body && err.body.run && !run) { run = err.body.run; mine = true; }
-      say('没成功：' + err.message, true);
+      say((err.message.includes('点的位置没找到物体')
+        ? `点的位置没抠到「${prompt}」。点在物体本身上（别点在压着它的东西上，比如靠垫），或者换个英文词，再点一次。\n`
+        : '没成功：') + err.message, true);
     }
-    busy = false; side.poll();
+    busy = false; $('aCancel').disabled = false; side.poll();
   }
   // a click is a press and release without moving (no time limit: a slow frame between the two must not turn it into a drag)
   let down = null;

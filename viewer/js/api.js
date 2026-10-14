@@ -26,12 +26,16 @@ export function updatedMs(st) {
   const t = Date.parse(u); return Number.isNaN(t) ? 0 : t;
 }
 
-// wait until <run>'s job, started at or after `since` (ms), has finished
-export async function waitRun(run, since) {
+// <run>'s status.json "updated" right now: read it before starting a job and hand it to waitRun
+export async function lastUpdate(run) { const st = await tryJSON(`${runDir(run)}/status.json`); return st ? st.updated : null; }
+
+// wait until <run>'s job has finished: "updated" must differ from `before`, so only server times are compared (the
+// browser may be on another computer, through a forwarded port, with its own clock)
+export async function waitRun(run, before) {
   for (;;) {
     await new Promise((ok) => setTimeout(ok, 2000));
     const st = await tryJSON(`${runDir(run)}/status.json`);
-    if (st && updatedMs(st) >= since - 1000 && (st.state === 'done' || st.state === 'failed')) return st;
+    if (st && st.updated !== before && (st.state === 'done' || st.state === 'failed')) return st;
   }
 }
 
@@ -43,7 +47,7 @@ export async function drawMask(canvas, cropUrl, maskUrl, px, zoom) {
   let sx = 0, sy = 0, sw = img.width, sh = img.height;
   if (zoom) {
     const N = 256, t = document.createElement('canvas'); t.width = t.height = N;
-    const tg = t.getContext('2d'); tg.drawImage(msk, 0, 0, N, N); const d = tg.getImageData(0, 0, N, N).data;
+    const tg = t.getContext('2d', { willReadFrequently: true }); tg.drawImage(msk, 0, 0, N, N); const d = tg.getImageData(0, 0, N, N).data;
     let x0 = N, y0 = N, x1 = -1, y1 = -1;
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (d[(y * N + x) * 4] > 127) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
     if (x1 >= 0) {
@@ -52,9 +56,9 @@ export async function drawMask(canvas, cropUrl, maskUrl, px, zoom) {
     }
   }
   canvas.width = canvas.height = px;
-  const g = canvas.getContext('2d'); g.drawImage(img, sx, sy, sw, sh, 0, 0, px, px);
+  const g = canvas.getContext('2d', { willReadFrequently: true }); g.drawImage(img, sx, sy, sw, sh, 0, 0, px, px);
   const t = document.createElement('canvas'); t.width = t.height = px;
-  const tg = t.getContext('2d'); tg.drawImage(msk, sx, sy, sw, sh, 0, 0, px, px);
+  const tg = t.getContext('2d', { willReadFrequently: true }); tg.drawImage(msk, sx, sy, sw, sh, 0, 0, px, px);
   const m = tg.getImageData(0, 0, px, px).data, out = g.getImageData(0, 0, px, px), d = out.data;
   const inside = (i) => m[i * 4] > 127;
   for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) {

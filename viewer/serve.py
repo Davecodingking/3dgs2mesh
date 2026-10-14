@@ -10,7 +10,7 @@
 #   POST /api/apply?run=<run>      redo the deletion with the hand edits, the comparisons, the check data, the scene
 #   POST /api/compose?scene=<id>   recompose the scene
 # usage: python viewer/serve.py [port=8791]
-import json, os, re, signal, sys, subprocess, http.server, urllib.parse
+import glob, json, os, re, signal, sys, subprocess, http.server, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = sys.executable
@@ -34,6 +34,15 @@ def status(run):
     except (OSError, ValueError): return {}
 
 
+def known(run):
+    """<run> is an object in some scene's list (a new one has no runs/<run>/ yet), or at least has a run dir."""
+    for path in glob.glob(f"{ROOT}/scenes/*.json"):
+        try: objs = json.load(open(path)).get("objects", [])
+        except (OSError, ValueError, AttributeError): continue
+        if any(o.get("run") == run for o in objs): return True
+    return os.path.isdir(f"{ROOT}/runs/{run}")
+
+
 def running_pid(run):
     """The pid of <run>'s pipeline if it is really still running (a pid in an old status.json may belong to anyone now)."""
     st = status(run)
@@ -43,11 +52,20 @@ def running_pid(run):
     return int(st["pid"]) if b"pipeline.py" in b" ".join(cmd) and run.encode() in cmd else None
 
 
+ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def last_line(text):
+    lines = [l.strip() for l in ANSI.sub("", text or "").splitlines() if l.strip()]
+    return lines[-1] if lines else ""
+
+
 def why(p, run=None):
-    """What went wrong, short: the error the pipeline wrote into status.json, else the last lines of stderr."""
+    """What went wrong, in one line: the end of the error the pipeline wrote into status.json (it is a log tail, model
+    loading messages included), else the end of stderr."""
     st = status(run) if run else {}
-    if st.get("state") == "failed" and st.get("error"): return st["error"]
-    return "\n".join([l for l in (p.stderr or "").strip().splitlines() if l.strip()][-3:]) or f"exit code {p.returncode}"
+    if st.get("state") == "failed" and st.get("error"): return last_line(st["error"]) or st["error"]
+    return last_line(p.stderr) or f"exit code {p.returncode}"
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -65,7 +83,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         return json.loads(self.rfile.read(n)) if n else {}
 
-    def do_POST(self):
+    def do_POST(self):                                       # whatever breaks, the page gets an answer it can show
+        try: self.post()
+        except Exception as e:
+            try: self.reply(500, {"error": f"{type(e).__name__}: {e}"})
+            except OSError: pass
+
+    def post(self):
         u = urllib.parse.urlparse(self.path); q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
         run, scene = q.get("run", ""), q.get("scene", "")
         if any(v and not NAME.fullmatch(v) for v in (run, scene)): return self.reply(400, {"error": "bad run / scene name"})
@@ -75,7 +99,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             background(pipeline("compose", scene), f"{ROOT}/runs/{scene}_compose/compose.log")
             return self.reply(200, {"started": True})
         rd = f"{ROOT}/runs/{run}"
-        if not run or not os.path.isdir(rd): return self.reply(400, {"error": f"unknown run {run!r}"})
+        if not run or not known(run): return self.reply(400, {"error": f"unknown run {run!r}"})
+        if u.path in ("/api/manual", "/api/apply") and not os.path.isdir(f"{rd}/debug"):
+            return self.reply(400, {"error": f"{run} has no results to edit yet"})
         if u.path == "/api/manual":
             body = self.body()
             man = {k: sorted({int(i) for i in body.get(k, [])}) for k in ("delete", "keep")}
@@ -94,7 +120,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     if key in q:
                         if not STEPS.fullmatch(q[key]): return self.reply(400, {"error": f"bad {key}"})
                         args += [flag, q[key]]; break
-                if "seed" in q: args += ["--seed", str(int(q["seed"]))]
+                if "seed" in q:
+                    if not re.fullmatch(r"\d{1,9}", q["seed"]): return self.reply(400, {"error": "bad seed"})
+                    args += ["--seed", q["seed"]]
             else:
                 args = [u.path.rsplit("/", 1)[1], run]
             background(pipeline(*args), f"{rd}/run.log")
@@ -106,7 +134,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         generation image and the mask at the click. Waits for both and answers {run}, or {error, run}."""
         fields = self.body()
         if run:
-            if not os.path.isdir(f"{ROOT}/runs/{run}"): return self.reply(400, {"error": f"unknown run {run!r}"})
+            if not known(run): return self.reply(400, {"error": f"unknown run {run!r}"})
             if running_pid(run): return self.reply(409, {"error": "这个物体正在跑，先等它跑完或者停掉", "run": run})
             fields.pop("name", None)
             p = subprocess.run(pipeline("set", run, json.dumps(fields, ensure_ascii=False)), cwd=ROOT, capture_output=True, text=True)
@@ -116,6 +144,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             p = subprocess.run(pipeline("new", scene, json.dumps(fields, ensure_ascii=False)), cwd=ROOT, capture_output=True, text=True)
             if p.returncode: return self.reply(500, {"error": why(p)})
             run = json.loads(p.stdout.strip().splitlines()[-1])["run"]
+        os.makedirs(f"{ROOT}/runs/{run}", exist_ok=True)       # new only lists the object; its run dir comes with its first run
         with open(f"{ROOT}/runs/{run}/run.log", "a") as log:
             p = subprocess.run(pipeline("run", run, "--steps", "view,mask"), cwd=ROOT, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.PIPE, text=True)
             log.write(p.stderr)

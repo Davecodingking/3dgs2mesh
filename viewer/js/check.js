@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { renderer, scene, camera, world, controls, toThree, size, local, onFrame, resized, makeSplat, SplatFormat, keepCamera, belowBar } from './stage.js';
-import { runDir, get, post, waitRun } from './api.js';
+import { runDir, get, post, lastUpdate, waitRun } from './api.js';
 
 export async function startCheck(run, side) {
   const base = `${runDir(run)}/debug`;
@@ -171,11 +171,11 @@ export async function startCheck(run, side) {
     const d = [], k = [];
     for (const [i, m] of manual) (m === 'del' ? d : k).push(index[i]);
     await post(`/api/manual?run=${run}`, { delete: d, keep: k });
-    const t0 = Date.now();
+    const before = await lastUpdate(run);
     note = '已保存，后台更新中（删点、对比图、合成场景）…'; refresh();
     const j = await post(`/api/apply?run=${run}`);
     if (j.started) {
-      const st = await waitRun(run, t0);
+      const st = await waitRun(run, before);
       note = st.state === 'done' ? '已保存，后台也更新完了' : `后台更新失败：${st.error || ''}`;
     } else note = '已保存，后台也更新完了';
     refresh();
