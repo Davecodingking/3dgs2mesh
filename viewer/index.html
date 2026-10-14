@@ -3,86 +3,123 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3DGS 替换预览</title>
+<title>3DGS 物体替换</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
-  #ui { position: fixed; top: 12px; left: 12px; color: #eee; background: rgba(0, 0, 0, .6); padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.7; }
-  #ui a { color: #8cf; margin-right: 10px; }
-  #ui a.on { color: #fff; font-weight: bold; text-decoration: none; }
+  html, body { margin: 0; height: 100%; background: #111; color: #eee; font: 14px "PingFang SC", "Microsoft YaHei", sans-serif; overflow: hidden; }
+  button.t { padding: 3px 9px; background: #2a3038; color: #ddd; border: 1px solid #3c4550; border-radius: 5px; cursor: pointer; font: inherit; }
+  button.t.on { background: #2f6db5; border-color: #2f6db5; color: #fff; }
+  button.t.go { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
+  select, input[type=text] { background: #2a3038; color: #ddd; border: 1px solid #3c4550; border-radius: 5px; padding: 2px 6px; font: inherit; }
+
+  /* object list */
+  #side { position: fixed; left: 0; top: 0; bottom: 0; width: 250px; z-index: 7; background: #171b20; border-right: 1px solid #333; display: flex; flex-direction: column; }
+  #side .head { padding: 9px 12px; border-bottom: 1px solid #2a2f36; display: flex; align-items: center; gap: 8px; }
+  #side .head b { color: #9fb3c8; font-weight: normal; }
+  #rows { flex: 1; overflow-y: auto; }
+  .row { display: flex; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #23282e; cursor: pointer; }
+  .row:hover { background: #1e242b; }
+  .row.on { background: #20324a; }
+  .row canvas, .row .ph { width: 64px; height: 64px; flex: none; border-radius: 4px; background: #000; }
+  .row .ph { display: flex; align-items: center; justify-content: center; color: #6c7a89; font-size: 22px; }
+  .row .info { flex: 1; min-width: 0; font-size: 12px; line-height: 1.55; }
+  .row .name { font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .name .en { font-size: 12px; color: #8b97a5; }
+  .row .st { color: #aab; } .row .st.ok { color: #6fdc9a; } .row .st.bad { color: #ff7b7b; } .row .st.wait { color: #ffd166; }
+  .row .m { color: #9fb3c8; }
+  .row .bar { height: 3px; background: #2a3038; border-radius: 2px; margin: 3px 0; display: none; }
+  .row .bar i { display: block; height: 100%; width: 0; background: #2f6db5; border-radius: 2px; }
+  .row .acts { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .row .acts button, .row .acts select { font-size: 12px; padding: 1px 6px; }
+  #side .foot { padding: 10px; border-top: 1px solid #2a2f36; }
+  #side .foot button { width: 100%; padding: 6px; }
+
+  /* 3D area right of the list; the toolbar shows the groups of the current mode */
+  #canvas { position: fixed; left: 250px; right: 0; top: 0; bottom: 0; }
+  #bar { position: fixed; left: 250px; right: 0; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+         padding: 7px 12px; background: rgba(24, 28, 33, .93); border-bottom: 1px solid #333; }
+  .grp { display: flex; align-items: center; gap: 4px; }
+  .grp b { color: #9fb3c8; font-weight: normal; margin-right: 2px; }
+  body[data-mode=scene] [data-only=check], body[data-mode=check] [data-only=scene] { display: none !important; }
+  #status { position: fixed; left: 262px; bottom: 12px; z-index: 5; font-size: 12px; color: #ccd; background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px; white-space: pre-line; max-width: 45%; }
+  .legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 3px 0 8px; vertical-align: -1px; }
+
+  /* one object's check */
+  #panel { position: fixed; right: 12px; bottom: 12px; width: 360px; z-index: 5; background: #000; border: 1px solid #3c4550; border-radius: 6px; display: none; }
+  #panel img { width: 100%; display: block; }
+  #panel .tabs { display: flex; gap: 4px; padding: 6px; }
+  #panel .cap { padding: 0 8px 8px; font-size: 12px; color: #aab; line-height: 1.5; }
+  #brush { position: fixed; border: 2px solid #ff4fd8; border-radius: 50%; pointer-events: none; display: none; z-index: 6; }
+  #eraser { position: fixed; left: 262px; top: 92px; z-index: 5; width: 280px; background: rgba(24,28,33,.95); border: 1px solid #6b3d63;
+            border-radius: 6px; padding: 8px 10px; display: none; font-size: 13px; line-height: 1.9; }
+  #eraser label { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  #eraser input[type=range] { width: 130px; } #eraser .v { width: 44px; text-align: right; color: #9fb3c8; }
+
+  /* adding an object: the square is the generation image; outside it is dimmed */
+  #frame { position: fixed; display: none; border: 2px dashed #ffe14d; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .35); pointer-events: none; z-index: 3; }
+  #clickMark { position: fixed; display: none; width: 22px; height: 22px; margin: -11px 0 0 -11px; pointer-events: none; z-index: 4; }
+  #clickMark::before, #clickMark::after { content: ""; position: absolute; background: #ff4fd8; }
+  #clickMark::before { left: 10px; top: 0; width: 2px; height: 22px; } #clickMark::after { top: 10px; left: 0; height: 2px; width: 22px; }
+  #addPanel { position: fixed; right: 12px; top: 56px; width: 330px; z-index: 6; display: none; background: rgba(24,28,33,.97); border: 1px solid #6b5f2e;
+              border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.8; }
+  #addPanel .f { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 3px 0; }
+  #addPanel .f > span:first-child { color: #9fb3c8; white-space: nowrap; }
+  #addPanel input[type=text] { width: 190px; }
+  #addPanel .hint { color: #ffe9a8; white-space: pre-line; line-height: 1.6; margin: 6px 0; }
+  #addPanel .err { color: #ff8a8a; white-space: pre-line; line-height: 1.6; margin: 6px 0; }
+  #addPanel canvas { width: 100%; display: block; margin: 6px 0; border-radius: 4px; }
 </style>
 <script type="importmap">
-{ "imports": {
-  "three": "./lib/three.module.js",
-  "three/addons/": "./lib/addons/",
-  "@mkkellogg/gaussian-splats-3d": "./lib/gaussian-splats-3d.module.js"
-} }
+{ "imports": { "three": "./lib/three.module.js", "three/addons/": "./lib/addons/",
+               "@mkkellogg/gaussian-splats-3d": "./lib/gaussian-splats-3d.module.js" } }
 </script>
 </head>
-<body>
-<div id="ui">
-  <div><a id="m-rep" href="?mode=replaced">替换后（3DGS + 网格）</a><a id="m-orig" href="?mode=orig">原来的 3DGS</a><a id="m-mesh" href="?mode=mesh">只看网格</a></div>
-  <div>左键拖动：转 · 滚轮：远近 · 右键拖动：平移 · R：回到拍摄位置</div>
-  <div id="status">加载中…</div>
+<body data-mode="scene">
+<aside id="side">
+  <div class="head"><b>场景</b><select id="sceneSel"></select></div>
+  <div id="rows"></div>
+  <div class="foot"><button class="t go" id="addBtn">+ 加物体</button></div>
+</aside>
+<div id="bar">
+  <div class="grp" data-only="scene"><b>3DGS</b><button class="t on" data-gs="after">删点后</button><button class="t" data-gs="orig">原样</button><button class="t" data-gs="none">不显示</button></div>
+  <div class="grp" data-only="scene"><b>新网格</b><button class="t on" id="sMesh">显示</button></div>
+  <div class="grp" data-only="scene"><button class="t" id="sHome">回到拍摄位置</button><button class="t" id="sCompose">重新合成</button></div>
+
+  <div class="grp" data-only="check"><b>3DGS</b><button class="t on" data-scene="before">删点前</button><button class="t" data-scene="after">删点后</button><button class="t" data-scene="none">不显示</button></div>
+  <div class="grp" data-only="check"><b>叠加</b><button class="t on" id="tPts">删掉的点</button><button class="t" id="tMesh">新网格</button><button class="t on" id="tBox">删除范围</button><button class="t on" id="tCams">相机</button></div>
+  <div class="grp" data-only="check"><b>视角</b><select id="views"></select></div>
+  <div class="grp" data-only="check"><b>点刷子</b><button class="t on" data-brush="off">关</button><button class="t" data-brush="del">删</button><button class="t" data-brush="keep">留</button></div>
+  <div class="grp" data-only="check"><b>网格擦除</b><button class="t" id="tErase">打开</button></div>
+  <div class="grp" data-only="check"><button class="t go" id="preview">预览删点后</button><button class="t go" id="save">保存</button><button class="t" id="undo">清空手动修改</button></div>
+  <div class="grp legend" data-only="check"><span style="background:#ff2a2a"></span>自动删<span style="background:#ff4fd8"></span>手动删<span style="background:#b05cff"></span>橡皮擦会删<span style="background:#33d6ff"></span>手动留<span style="background:#ffe14d"></span>删除范围</div>
 </div>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import * as GS from '@mkkellogg/gaussian-splats-3d';
-
-const q = new URLSearchParams(location.search);
-const dir = q.get('dir') || '../runs/A01_compose';
-const mode = q.get('mode') || 'replaced';                     // replaced | orig | mesh
-document.getElementById({ replaced: 'm-rep', orig: 'm-orig', mesh: 'm-mesh' }[mode]).className = 'on';
-for (const a of document.querySelectorAll('#ui a')) a.href += `&dir=${encodeURIComponent(dir)}`;
-const status = document.getElementById('status');
-
-const renderer = new THREE.WebGLRenderer({ antialias: false });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 100);
-
-// The 3DGS and the meshes are in the OpenCV world (x right, y down, z forward, panorama camera at the origin).
-// three.js is y up: turn everything 180 deg about x.
-const flip = new THREE.Group(); flip.rotation.x = Math.PI; scene.add(flip);
-const objs = await (await fetch(`${dir}/objects.json`)).json();
-const target = new THREE.Vector3(...objs.target).applyEuler(new THREE.Euler(Math.PI, 0, 0));
-const controls = new OrbitControls(camera, renderer.domElement);
-const home = () => {                                          // stand at the panorama camera, a little behind it
-  const dirToTarget = target.clone().normalize();
-  camera.position.copy(dirToTarget.multiplyScalar(-0.05));
-  controls.target.copy(target); controls.update();
-};
-home();
-addEventListener('keydown', (e) => { if (e.key === 'r' || e.key === 'R') home(); });
-
-if (mode !== 'mesh') {
-  const splat = new GS.DropInViewer({ sharedMemoryForWorkers: false, gpuAcceleratedSort: false });
-  splat.addSplatScene(`${dir}/${mode === 'orig' ? 'orig' : 'scene'}.splat`,
-                      { rotation: [1, 0, 0, 0], showLoadingUI: true, splatAlphaRemovalThreshold: 5 });
-  scene.add(splat);
-}
-if (mode !== 'orig') {
-  const loader = new GLTFLoader();
-  for (const o of objs.objects) {
-    const g = await loader.loadAsync(`${dir}/${o.glb}`);
-    g.scene.traverse((m) => {                                 // unlit: the texture is baked from the photo already
-      if (!m.isMesh) return;
-      const old = m.material;
-      m.material = new THREE.MeshBasicMaterial({ map: old.map || null, color: old.map ? 0xffffff : (old.color || 0xffffff), side: THREE.DoubleSide });
-    });
-    flip.add(g.scene);
-  }
-}
-status.textContent = `物体：${objs.objects.map((o) => o.name).join('、')}`;
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
-});
-renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
-</script>
+<div id="canvas"></div>
+<div id="eraser"><div style="color:#ff8ce6">紫色网格就是橡皮擦：拖滑块，会被擦掉的点马上变紫（地面一层不擦）。满意了点顶栏"预览删点后"看效果，"保存"存下来。</div>
+  <label>整体大小<input type="range" id="eS" min="0.8" max="1.6" step="0.01" value="1.05"><span class="v" id="eSv"></span></label>
+  <label>左右长<input type="range" id="eX" min="0.7" max="1.5" step="0.01" value="1"><span class="v" id="eXv"></span></label>
+  <label>高<input type="range" id="eY" min="0.7" max="1.5" step="0.01" value="1"><span class="v" id="eYv"></span></label>
+  <label>前后长<input type="range" id="eZ" min="0.7" max="1.5" step="0.01" value="1"><span class="v" id="eZv"></span></label>
+  <label>左右移<input type="range" id="eDX" min="-0.1" max="0.1" step="0.002" value="0"><span class="v" id="eDXv"></span></label>
+  <label>上下移<input type="range" id="eDY" min="-0.1" max="0.1" step="0.002" value="0"><span class="v" id="eDYv"></span></label>
+  <label>前后移<input type="range" id="eDZ" min="-0.1" max="0.1" step="0.002" value="0"><span class="v" id="eDZv"></span></label>
+  <div id="eCount" style="color:#d9a6ff"></div><button class="t" id="eReset">复位</button></div>
+<div id="panel"><div class="tabs"><button class="t on" data-img="before">删点前</button><button class="t" data-img="after">删点后</button><button class="t" data-img="removed">删掉的点</button></div>
+  <img id="pimg" alt=""><div class="cap" id="pcap"></div></div>
+<div id="frame"></div><div id="clickMark"></div>
+<div id="addPanel">
+  <div style="font-size:15px;color:#ffe14d">加物体</div>
+  <div class="f"><span>英文词</span><input type="text" id="aPrompt" placeholder="例：green armchair"></div>
+  <div class="f"><span>中文名</span><input type="text" id="aLabel" placeholder="可以不填"></div>
+  <div class="f"><span>压在上面的</span><input type="text" id="aParts" placeholder="例：pillow, blanket（可不填）"></div>
+  <div class="f"><span>放在</span><span><label><input type="radio" name="aRest" value="floor" checked>地上</label> <label><input type="radio" name="aRest" value="table">桌上</label></span></div>
+  <div class="f"><span>宁大勿小</span><span><label><input type="checkbox" id="aCover">新网格不比旧物体小</label></span></div>
+  <div style="margin-top:6px"><button class="t" id="aPano">站到全景相机位置</button></div>
+  <div id="aPanoNote" style="color:#9fb3c8;font-size:12px"></div>
+  <div id="aMsg" class="hint"></div>
+  <canvas id="aImg" style="display:none"></canvas>
+  <div><button class="t go" id="aGo" style="display:none">对，开始生成</button> <button class="t" id="aCancel">取消</button></div>
+</div>
+<div id="status">加载中…</div>
+<div id="brush"></div>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
