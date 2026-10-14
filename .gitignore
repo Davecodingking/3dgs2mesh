@@ -6,3 +6,4 @@ place.mjs
 __pycache__/
 *.pyc
 *.log
+*.tmp*

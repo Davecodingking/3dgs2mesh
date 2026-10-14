@@ -1,0 +1,285 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1010" viewBox="0 0 1720 1010">
+<style>
+  text { font-family: 'Noto Sans CJK SC','Noto Sans SC','Source Han Sans SC','PingFang SC','Microsoft YaHei',sans-serif; fill: #1f2937; }
+  .h1 { font-size: 26px; font-weight: 700; }
+  .sub { font-size: 14px; fill: #4b5563; }
+  .leg { font-size: 13px; fill: #374151; }
+  .ph { font-size: 17px; font-weight: 700; }
+  .pn { font-family: 'SFMono-Regular','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace; font-size: 11.5px; fill: #6b7280; }
+  .numt { font-size: 13px; font-weight: 700; fill: #ffffff; }
+  .tag { font-family: 'SFMono-Regular','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace; font-size: 13.5px; font-weight: 700; fill: #111827; }
+  .tagsm { font-family: 'SFMono-Regular','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace; font-size: 12px; font-weight: 700; fill: #111827; }
+  .tagzh, .tagmix { font-size: 13.5px; font-weight: 700; fill: #111827; }
+  .d { font-size: 12.5px; fill: #374151; }
+  .dh { font-size: 12.5px; fill: #7c3d00; }
+  .dhm { font-family: 'SFMono-Regular','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace; font-size: 12px; fill: #7c3d00; }
+  .dhc { font-size: 12px; fill: #a3530a; }
+  .note { font-size: 11.5px; fill: #6b7280; font-style: italic; }
+  .olab { font-size: 11.5px; fill: #6b7280; }
+  .f { font-family: 'SFMono-Regular','JetBrains Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace; font-size: 11px; fill: #374151; }
+  .fz { font-size: 11.5px; fill: #374151; }
+  .badget { font-size: 11px; font-weight: 700; fill: #ffffff; }
+  .panel { fill: #f6f7f9; stroke: #d3d8df; stroke-width: 1; }
+  .div { stroke: #d3d8df; stroke-width: 1; }
+  .num { fill: #1f2937; }
+  .cprog { fill: #ffffff; stroke: #c3c9d2; stroke-width: 1; }
+  .cinput { fill: #ffffff; stroke: #8b95a3; stroke-width: 1; }
+  .cmodel { fill: #e9f1fc; stroke: #2f6fd0; stroke-width: 1.5; }
+  .copt { fill: #ffffff; stroke: #8b95a3; stroke-width: 1; stroke-dasharray: 4 3; }
+  .ckey { fill: #ffffff; stroke: #1f2937; stroke-width: 1.6; }
+  .chum { fill: #fff3e3; stroke: #e0892b; stroke-width: 1.2; }
+  .chip { fill: #eef0f3; stroke: none; }
+  .chipk { fill: #e3f3e6; stroke: #4f9a5f; stroke-width: 1; }
+  .badge { fill: #2f6fd0; }
+  .sys { fill: #ffffff; stroke: #8b95a3; stroke-width: 1; }
+  .arr { stroke: #4b5563; stroke-width: 1.6; fill: none; }
+  .arrd { stroke: #6b7280; stroke-width: 1.2; fill: none; stroke-dasharray: 5 4; }
+  .hum { stroke: #e0892b; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+</style>
+<defs>
+  <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/></marker>
+  <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e0892b"/></marker>
+</defs>
+<rect width="1720" height="1010" fill="#ffffff"/>
+<text x="24" y="42" class="h1" text-anchor="start">3dgs2mesh 流程总览</text>
+<text x="24" y="70" class="sub" text-anchor="start">把 3DGS 场景里的一个物体换成 SAM 3D Objects 生成的网格。单个物体 15 步，做完的物体按场景合成。只用两个模型（蓝色，本地部署），其余都是固定的几何程序。</text>
+<rect x="1236" y="30" width="22" height="16" rx="4" class="cmodel"/>
+<text x="1266" y="43" class="leg" text-anchor="start">模型</text>
+<rect x="1354" y="30" width="22" height="16" rx="4" class="cprog"/>
+<text x="1384" y="43" class="leg" text-anchor="start">几何程序</text>
+<rect x="1472" y="30" width="22" height="16" rx="4" class="chum"/>
+<text x="1502" y="43" class="leg" text-anchor="start">人工</text>
+<rect x="1590" y="30" width="22" height="16" rx="4" class="chip"/>
+<text x="1620" y="43" class="leg" text-anchor="start">输出文件</text>
+<rect x="24" y="96" width="180" height="566" rx="12" class="panel"/>
+<text x="40" y="129" class="ph" text-anchor="start">输入</text>
+<line x1="36" y1="166" x2="192" y2="166" class="div"/>
+<rect x="36" y="176" width="156" height="69" rx="8" class="cinput"/>
+<text x="46" y="197" class="tagzh" text-anchor="start">全景照片</text>
+<text x="46" y="217" class="d" text-anchor="start">pano.jpg（2048×1024）</text>
+<text x="46" y="234" class="d" text-anchor="start">相机在原点</text>
+<rect x="36" y="259" width="156" height="86" rx="8" class="cinput"/>
+<text x="46" y="280" class="tagzh" text-anchor="start">3DGS 场景</text>
+<text x="46" y="300" class="d" text-anchor="start">filled_*.ply</text>
+<text x="46" y="317" class="d" text-anchor="start">2^20 个高斯，只有 DC</text>
+<text x="46" y="334" class="d" text-anchor="start">颜色；③–⑥ 都要读</text>
+<rect x="36" y="359" width="156" height="103" rx="8" class="cinput"/>
+<text x="46" y="380" class="tagzh" text-anchor="start">物体清单</text>
+<text x="46" y="400" class="d" text-anchor="start">scenes/&lt;场景&gt;.json</text>
+<text x="46" y="417" class="d" text-anchor="start">提示词、部件、地上 /</text>
+<text x="46" y="434" class="d" text-anchor="start">桌上、宁大勿小、相机、</text>
+<text x="46" y="451" class="d" text-anchor="start">点击（网页上建）</text>
+<rect x="232" y="96" width="214" height="566" rx="12" class="panel"/>
+<circle cx="256" cy="124" r="13" class="num"/>
+<text x="256" y="129" class="numt" text-anchor="middle">1</text>
+<text x="278" y="129" class="ph" text-anchor="start">取景与抠图</text>
+<text x="246" y="152" class="pn" text-anchor="start">view · align · mask</text>
+<line x1="244" y1="166" x2="434" y2="166" class="div"/>
+<rect x="480" y="96" width="214" height="566" rx="12" class="panel"/>
+<circle cx="504" cy="124" r="13" class="num"/>
+<text x="504" y="129" class="numt" text-anchor="middle">2</text>
+<text x="526" y="129" class="ph" text-anchor="start">生成</text>
+<text x="494" y="152" class="pn" text-anchor="start">gen · preview</text>
+<line x1="492" y1="166" x2="682" y2="166" class="div"/>
+<rect x="728" y="96" width="214" height="566" rx="12" class="panel"/>
+<circle cx="752" cy="124" r="13" class="num"/>
+<text x="752" y="129" class="numt" text-anchor="middle">3</text>
+<text x="774" y="129" class="ph" text-anchor="start">单视角摆放</text>
+<text x="742" y="152" class="pn" text-anchor="start">place</text>
+<line x1="740" y1="166" x2="930" y2="166" class="div"/>
+<rect x="976" y="96" width="214" height="566" rx="12" class="panel"/>
+<circle cx="1000" cy="124" r="13" class="num"/>
+<text x="1000" y="129" class="numt" text-anchor="middle">4</text>
+<text x="1022" y="129" class="ph" text-anchor="start">多视角删点</text>
+<text x="990" y="152" class="pn" text-anchor="start">views · vmask · vote · carve</text>
+<line x1="988" y1="166" x2="1178" y2="166" class="div"/>
+<rect x="1224" y="96" width="214" height="566" rx="12" class="panel"/>
+<circle cx="1248" cy="124" r="13" class="num"/>
+<text x="1248" y="129" class="numt" text-anchor="middle">5</text>
+<text x="1270" y="129" class="ph" text-anchor="start">多视角精修</text>
+<text x="1238" y="152" class="pn" text-anchor="start">fit</text>
+<line x1="1236" y1="166" x2="1426" y2="166" class="div"/>
+<rect x="1472" y="96" width="214" height="566" rx="12" class="panel"/>
+<circle cx="1496" cy="124" r="13" class="num"/>
+<text x="1496" y="129" class="numt" text-anchor="middle">6</text>
+<text x="1518" y="129" class="ph" text-anchor="start">检查与合成</text>
+<text x="1486" y="152" class="pn" text-anchor="start">overlay check compare debug</text>
+<line x1="1484" y1="166" x2="1674" y2="166" class="div"/>
+<rect x="244" y="176" width="190" height="86" rx="8" class="cprog"/>
+<text x="254" y="197" class="tag" text-anchor="start">view</text>
+<text x="254" y="217" class="d" text-anchor="start">相机在全景中心：从全景</text>
+<text x="254" y="234" class="d" text-anchor="start">照片切图；在别处：用</text>
+<text x="254" y="251" class="d" text-anchor="start">3DGS 渲染这个机位</text>
+<rect x="244" y="274" width="190" height="69" rx="8" class="cprog"/>
+<text x="254" y="295" class="tag" text-anchor="start">align</text>
+<text x="254" y="315" class="d" text-anchor="start">3DGS 从同一机位渲染，</text>
+<text x="254" y="332" class="d" text-anchor="start">核对和照片是否对齐</text>
+<rect x="244" y="355" width="190" height="103" rx="8" class="cmodel"/>
+<text x="254" y="376" class="tag" text-anchor="start">mask</text>
+<rect x="385.2" y="363" width="40.8" height="18" rx="9" class="badge"/>
+<text x="405.6" y="376" class="badget" text-anchor="middle">SAM3</text>
+<text x="254" y="396" class="d" text-anchor="start">按提示词找实例；有点击</text>
+<text x="254" y="413" class="d" text-anchor="start">就取点中的那个，否则取</text>
+<text x="254" y="430" class="d" text-anchor="start">分数最高的；靠垫、毯子</text>
+<text x="254" y="447" class="d" text-anchor="start">等部件另抠后并进来</text>
+<rect x="492" y="176" width="190" height="103" rx="8" class="cmodel"/>
+<text x="502" y="197" class="tag" text-anchor="start">gen</text>
+<rect x="561.2" y="184" width="112.8" height="18" rx="9" class="badge"/>
+<text x="617.6" y="197" class="badget" text-anchor="middle">SAM 3D Objects</text>
+<text x="502" y="217" class="d" text-anchor="start">图 + mask → 带贴图的</text>
+<text x="502" y="234" class="d" text-anchor="start">网格；另存它预测的位姿</text>
+<text x="502" y="251" class="d" text-anchor="start">（物体在相机里的位置、</text>
+<text x="502" y="268" class="d" text-anchor="start">朝向、大小）</text>
+<rect x="492" y="291" width="190" height="69" rx="8" class="cprog"/>
+<text x="502" y="312" class="tag" text-anchor="start">preview</text>
+<text x="502" y="332" class="d" text-anchor="start">从相机方向和另外三个</text>
+<text x="502" y="349" class="d" text-anchor="start">方向看网格的预览图</text>
+<rect x="740" y="176" width="190" height="205" rx="8" class="cprog"/>
+<text x="750" y="197" class="tag" text-anchor="start">place</text>
+<text x="750" y="217" class="d" text-anchor="start">· 旧物体的点：场景点投到</text>
+<text x="750" y="234" class="d" text-anchor="start">　图上、落在 mask 里的</text>
+<text x="750" y="251" class="d" text-anchor="start">· 摆正：网格里最大的水平</text>
+<text x="750" y="268" class="d" text-anchor="start">　面放平</text>
+<text x="750" y="285" class="d" text-anchor="start">· 搜索：朝向 ±30°、大小</text>
+<text x="750" y="302" class="d" text-anchor="start">　±35%、左右、前后</text>
+<text x="750" y="319" class="d" text-anchor="start">· 打分：点到网格的距离 +</text>
+<text x="750" y="336" class="d" text-anchor="start">　外框和 mask 对齐</text>
+<text x="750" y="353" class="d" text-anchor="start">· 落地：最低点放在地面</text>
+<text x="750" y="370" class="d" text-anchor="start">　（地上 / 桌上）</text>
+<text x="744" y="407" class="note" text-anchor="start">源自同事 place.mjs 的贴表面拟合，</text>
+<text x="744" y="425" class="note" text-anchor="start">改为用 mask 选点、用网格本身拟合</text>
+<rect x="988" y="176" width="190" height="86" rx="8" class="cprog"/>
+<text x="998" y="197" class="tag" text-anchor="start">views</text>
+<text x="998" y="217" class="d" text-anchor="start">围着物体用 3DGS 渲 6 个</text>
+<text x="998" y="234" class="d" text-anchor="start">视角，加上生成用的视角；</text>
+<text x="998" y="251" class="d" text-anchor="start">它是渲染图时再加照片</text>
+<rect x="988" y="274" width="190" height="69" rx="8" class="cmodel"/>
+<text x="998" y="295" class="tag" text-anchor="start">vmask</text>
+<rect x="1129.2" y="282" width="40.8" height="18" rx="9" class="badge"/>
+<text x="1149.6" y="295" class="badget" text-anchor="middle">SAM3</text>
+<text x="998" y="315" class="d" text-anchor="start">每个视角抠一次，取覆盖</text>
+<text x="998" y="332" class="d" text-anchor="start">种子点最多的那个实例</text>
+<rect x="988" y="355" width="190" height="69" rx="8" class="cprog"/>
+<text x="998" y="376" class="tag" text-anchor="start">vote</text>
+<text x="998" y="396" class="d" text-anchor="start">每个高斯点由各视角投票：</text>
+<text x="998" y="413" class="d" text-anchor="start">物体 / 没看到 / 其他</text>
+<rect x="988" y="436" width="190" height="86" rx="8" class="cprog"/>
+<text x="998" y="457" class="tag" text-anchor="start">carve</text>
+<text x="998" y="477" class="d" text-anchor="start">物体点的俯视轮廓竖直挤</text>
+<text x="998" y="494" class="d" text-anchor="start">出，整块删除；旁边悬空</text>
+<text x="998" y="511" class="d" text-anchor="start">的碎块一起删；手工优先</text>
+<rect x="1236" y="176" width="190" height="154" rx="8" class="cprog"/>
+<text x="1246" y="197" class="tag" text-anchor="start">fit</text>
+<text x="1246" y="217" class="d" text-anchor="start">所有视角的 mask 一起拟合</text>
+<text x="1246" y="234" class="d" text-anchor="start">打分：轮廓 IoU（用</text>
+<text x="1246" y="251" class="d" text-anchor="start">nvdiffrast 光栅化）</text>
+<text x="1246" y="268" class="d" text-anchor="start">+ 旧物体点到网格的距离</text>
+<text x="1246" y="285" class="d" text-anchor="start">调：朝向 ±15°、缩放、</text>
+<text x="1246" y="302" class="d" text-anchor="start">每轴拉伸 ±10%、位置；</text>
+<text x="1246" y="319" class="d" text-anchor="start">最低点仍落在地面</text>
+<rect x="1236" y="342" width="190" height="69" rx="8" class="copt"/>
+<text x="1246" y="363" class="tagmix" text-anchor="start">cover（可选）</text>
+<text x="1246" y="383" class="d" text-anchor="start">宁大勿小：每个方向都</text>
+<text x="1246" y="400" class="d" text-anchor="start">不小于量出的旧物体</text>
+<rect x="1484" y="176" width="190" height="86" rx="8" class="cprog"/>
+<text x="1494" y="197" class="tagsm" text-anchor="start">overlay · check · compare</text>
+<text x="1494" y="217" class="d" text-anchor="start">各视角 mask 与网格轮廓；</text>
+<text x="1494" y="234" class="d" text-anchor="start">删点前后、加网格对比；</text>
+<text x="1494" y="251" class="d" text-anchor="start">各视角残留比例</text>
+<rect x="1484" y="274" width="190" height="69" rx="8" class="cprog"/>
+<text x="1494" y="295" class="tag" text-anchor="start">debug</text>
+<text x="1494" y="315" class="d" text-anchor="start">3D 检查页的数据：点的</text>
+<text x="1494" y="332" class="d" text-anchor="start">分类、投票、网格体素</text>
+<rect x="1484" y="355" width="190" height="86" rx="8" class="ckey"/>
+<text x="1494" y="376" class="tagmix" text-anchor="start">compose（按场景）</text>
+<text x="1494" y="396" class="d" text-anchor="start">场景里做完的物体一起删</text>
+<text x="1494" y="413" class="d" text-anchor="start">点，拷出各自的网格；同</text>
+<text x="1494" y="430" class="d" text-anchor="start">时完成的任务排队合成</text>
+<text x="246" y="572" class="olab" text-anchor="start">输出</text>
+<rect x="244" y="580" width="190" height="21" rx="5" class="chip"/>
+<text x="252" y="595" class="f" text-anchor="start">crop.jpg · cam.json</text>
+<rect x="244" y="606" width="190" height="21" rx="5" class="chip"/>
+<text x="252" y="621" class="f" text-anchor="start">mask_final.png</text>
+<text x="494" y="572" class="olab" text-anchor="start">输出</text>
+<rect x="492" y="580" width="190" height="21" rx="5" class="chip"/>
+<text x="500" y="595" class="f" text-anchor="start">gen/&lt;name&gt;.glb</text>
+<rect x="492" y="606" width="190" height="21" rx="5" class="chip"/>
+<text x="500" y="621" class="f" text-anchor="start">gen/&lt;name&gt;_posed.glb</text>
+<rect x="492" y="632" width="190" height="21" rx="5" class="chip"/>
+<text x="500" y="647" class="f" text-anchor="start">gen/&lt;name&gt;_pose.json</text>
+<text x="742" y="572" class="olab" text-anchor="start">输出</text>
+<rect x="740" y="580" width="190" height="21" rx="5" class="chip"/>
+<text x="748" y="595" class="f" text-anchor="start">place.json</text>
+<rect x="740" y="606" width="190" height="21" rx="5" class="chip"/>
+<text x="748" y="621" class="f" text-anchor="start">gen/&lt;name&gt;_world.glb</text>
+<text x="990" y="572" class="olab" text-anchor="start">输出</text>
+<rect x="988" y="580" width="190" height="21" rx="5" class="chip"/>
+<text x="996" y="595" class="f" text-anchor="start">labels.npy</text>
+<rect x="988" y="606" width="190" height="21" rx="5" class="chip"/>
+<text x="996" y="621" class="f" text-anchor="start">scene_carved.ply</text>
+<rect x="988" y="632" width="190" height="21" rx="5" class="chip"/>
+<text x="996" y="647" class="f" text-anchor="start">removed.ply</text>
+<text x="1238" y="572" class="olab" text-anchor="start">输出</text>
+<rect x="1236" y="580" width="190" height="21" rx="5" class="chip"/>
+<text x="1244" y="595" class="f" text-anchor="start">gen/&lt;name&gt;_world.glb</text>
+<rect x="1236" y="606" width="190" height="21" rx="5" class="chip"/>
+<text x="1244" y="621" class="f" text-anchor="start">fit_mv.json</text>
+<text x="1486" y="572" class="olab" text-anchor="start">输出</text>
+<rect x="1484" y="580" width="190" height="21" rx="5" class="chip"/>
+<text x="1492" y="595" class="fz" text-anchor="start">runs/&lt;场景&gt;_compose/</text>
+<rect x="1484" y="606" width="190" height="21" rx="5" class="chipk"/>
+<text x="1492" y="621" class="fz" text-anchor="start">scene.ply（交付）</text>
+<rect x="1484" y="632" width="190" height="21" rx="5" class="chipk"/>
+<text x="1492" y="647" class="fz" text-anchor="start">&lt;run&gt;.glb（交付）</text>
+<line x1="206" y1="330" x2="230" y2="330" class="arr" marker-end="url(#ah)"/>
+<line x1="448" y1="330" x2="478" y2="330" class="arr" marker-end="url(#ah)"/>
+<line x1="696" y1="330" x2="726" y2="330" class="arr" marker-end="url(#ah)"/>
+<line x1="944" y1="330" x2="974" y2="330" class="arr" marker-end="url(#ah)"/>
+<line x1="1192" y1="330" x2="1222" y2="330" class="arr" marker-end="url(#ah)"/>
+<line x1="1440" y1="330" x2="1470" y2="330" class="arr" marker-end="url(#ah)"/>
+<rect x="232" y="690" width="214" height="54" rx="8" class="chum"/>
+<text x="242" y="712" class="dh" text-anchor="start">人：在网页的方框里点物体，</text>
+<text x="242" y="731" class="dh" text-anchor="start">看一眼抠图再往下跑</text>
+<line x1="339.0" y1="688" x2="339.0" y2="665" class="hum" marker-end="url(#ah2)"/>
+<rect x="1472" y="690" width="214" height="54" rx="8" class="chum"/>
+<text x="1482" y="712" class="dh" text-anchor="start">人：3D 检查页手刷补删</text>
+<text x="1482" y="731" class="dhm" text-anchor="start">→ manual.json</text>
+<line x1="1579.0" y1="688" x2="1579.0" y2="665" class="hum" marker-end="url(#ah2)"/>
+<path d="M 1470 717 L 1083.0 717 L 1083.0 665" class="hum" marker-end="url(#ah2)"/>
+<text x="1277.5" y="709" class="dhc" text-anchor="middle">apply：重跑 carve → compare → debug → compose</text>
+<text x="24" y="804" class="ph" text-anchor="start">系统结构</text>
+<rect x="24" y="824" width="210" height="78" rx="8" class="sys"/>
+<text x="36" y="848" class="tagmix" text-anchor="start">viewer/ 网页</text>
+<text x="36" y="870" class="d" text-anchor="start">加物体、看进度、检查</text>
+<rect x="272" y="824" width="170" height="78" rx="8" class="sys"/>
+<text x="284" y="848" class="tag" text-anchor="start">serve.py</text>
+<text x="284" y="870" class="d" text-anchor="start">本地服务，按钮转命令</text>
+<rect x="480" y="824" width="250" height="78" rx="8" class="sys"/>
+<text x="492" y="848" class="tag" text-anchor="start">pipeline.py</text>
+<text x="492" y="870" class="d" text-anchor="start">读清单、领 GPU、写</text>
+<text x="492" y="887" class="d" text-anchor="start">status.json；每步一个进程</text>
+<rect x="768" y="824" width="220" height="78" rx="8" class="sys"/>
+<text x="780" y="848" class="tagmix" text-anchor="start">gs2mesh/&lt;步骤&gt;.py</text>
+<text x="780" y="870" class="d" text-anchor="start">15 步 + compose；</text>
+<text x="780" y="887" class="d" text-anchor="start">common.py 放共用部分</text>
+<line x1="236" y1="863.0" x2="270" y2="863.0" class="arr" marker-end="url(#ah)"/>
+<line x1="444" y1="863.0" x2="478" y2="863.0" class="arr" marker-end="url(#ah)"/>
+<line x1="732" y1="863.0" x2="766" y2="863.0" class="arr" marker-end="url(#ah)"/>
+<rect x="1030" y="824" width="250" height="78" rx="8" class="cmodel"/>
+<text x="1042" y="848" class="tagzh" text-anchor="start">sam3d 环境</text>
+<text x="1042" y="870" class="d" text-anchor="start">SAM 3D Objects、gsplat、</text>
+<text x="1042" y="887" class="d" text-anchor="start">nvdiffrast、pyrender</text>
+<rect x="1300" y="824" width="140" height="78" rx="8" class="cmodel"/>
+<text x="1312" y="848" class="tagzh" text-anchor="start">sam3 环境</text>
+<text x="1312" y="870" class="d" text-anchor="start">SAM3</text>
+<line x1="990" y1="863.0" x2="1028" y2="863.0" class="arrd" marker-end="url(#ah)"/>
+<path d="M 878 822 L 878 810 L 1370.0 810 L 1370.0 822" class="arrd" marker-end="url(#ah)"/>
+<text x="1180" y="804" class="note" text-anchor="middle">按步骤选环境</text>
+<rect x="1478" y="824" width="208" height="78" rx="8" class="sys"/>
+<text x="1490" y="848" class="tag" text-anchor="start">runs/&lt;run&gt;/</text>
+<text x="1490" y="870" class="d" text-anchor="start">结果文件、status.json；</text>
+<text x="1490" y="887" class="fz" text-anchor="start">runs/&lt;场景&gt;_compose/</text>
+<line x1="1442" y1="863.0" x2="1476" y2="863.0" class="arr" marker-end="url(#ah)"/>
+<path d="M 1582.0 904 L 1582.0 932 L 129 932 L 129 906" class="arrd" marker-end="url(#ah)"/>
+<text x="800" y="952" class="note" text-anchor="middle">网页每 2 秒直接读 status.json 和结果文件，不经过 Python</text>
+</svg>

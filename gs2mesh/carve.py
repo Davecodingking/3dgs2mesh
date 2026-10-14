@@ -1,4 +1,4 @@
-# Experiment: delete the old object (step 4 of the multi-view flow) as a closed volume, not point by point.
+# Step carve: delete the old object from the 3DGS as a closed volume, not point by point.
 # The closure: the outline of the voted object points seen from above (convex hull of their largest blob, specks dropped),
 # extruded from just above the floor layer (3% H) up to the object's top. Everything inside goes, whatever the vote said:
 # per-point voting kept what the views could not see or saw wrongly (A01 table: the part behind the vase). The floor layer
@@ -6,29 +6,27 @@
 # Floaters beside it go too (floaters()): outside the outline but within FLOAT_D of it, above the floor layer, no higher
 # than its top, and not connected to anything that stays. A01 table: the floor behind its far edge had been put at
 # table-top height by the 3DGS; from anywhere but the panorama camera it hung there as a brown slab.
-# Hand edits from the 3D check page (<run>/manual.json: scene indices to "delete" / "keep", the point brush and the mesh
-# eraser both write there) override all of the above.
-# Writes the carved scene and <run>/removed.ply.
-# usage: carve_labels.py <run> <scene.ply> <out.ply>        (compose.py, debug_export.py, mesh_erase.py import from here)
-import os, sys, json, numpy as np, cv2
-from plyfile import PlyData, PlyElement
+# Hand edits from the 3D check page (manual.json: scene indices to "delete" / "keep") override all of the above.
+# Writes scene_carved.ply (this object deleted) and removed.ply (what was deleted). compose and debug use label_drop().
+import os, json, numpy as np, cv2
 from scipy.spatial import cKDTree
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
+from .common import read_ply, write_ply
 
 FLOAT_D, LINK, CELL = 0.05, 0.01, 0.005
 
 
-def setup(v, run):
-    labels = np.load(f"{run}/labels.npy")
-    P = json.load(open(f"{run}/place.json")); floor = P["metrics"]["floor_y"]; H = P["unit"]
+def setup(v, run_dir):
+    labels = np.load(f"{run_dir}/labels.npy")
+    P = json.load(open(f"{run_dir}/place.json")); floor = P["metrics"]["floor_y"]; H = P["unit"]
     X = np.stack([v["x"], v["y"], v["z"]], 1).astype(np.float64)
     return labels, P, floor, H, X, floor - X[:, 1]                 # last: height above the floor
 
 
-def closure(v, run):
+def closure(v, run_dir):
     """(bool per gaussian inside the closure, outline polygon in world x/z, bottom height, top height, grid info)."""
-    labels, P, floor, H, X, h = setup(v, run); obj = labels == 1
+    labels, P, floor, H, X, h = setup(v, run_dir); obj = labels == 1
     xz = X[:, [0, 2]]; mn = xz[obj].min(0) - 2 * FLOAT_D
     n = np.ceil((xz[obj].max(0) + 2 * FLOAT_D - mn) / CELL).astype(int) + 1
     ij = np.floor((xz - mn) / CELL).astype(int); ing = (ij[:, 0] >= 0) & (ij[:, 0] < n[0]) & (ij[:, 1] >= 0) & (ij[:, 1] < n[1])
@@ -46,9 +44,9 @@ def closure(v, run):
     return inside, poly, bottom, top, (grid, mn, n, ij, ing)
 
 
-def floaters(v, run, drop, gridinfo, top):
+def floaters(v, run_dir, drop, gridinfo, top):
     """Points hanging beside the deleted object (see the header). Returns a bool per gaussian."""
-    labels, P, floor, H, X, h = setup(v, run)
+    labels, P, floor, H, X, h = setup(v, run_dir)
     grid, mn, n, ij, ing = gridinfo
     r = int(np.ceil(FLOAT_D / CELL)); disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1,) * 2)
     band = (cv2.dilate(grid, disk) > 0) & (grid == 0)
@@ -71,26 +69,24 @@ def floaters(v, run, drop, gridinfo, top):
     return out
 
 
-def label_drop(v, run):
-    """Which gaussians of vertex array v to delete for <run>: the closure, the floaters beside it, then the hand edits."""
-    inside, poly, bottom, top, gridinfo = closure(v, run)
-    fl = floaters(v, run, inside, gridinfo, top)
+def label_drop(v, run_dir):
+    """Which gaussians of vertex array v to delete for <run_dir>: the closure, the floaters beside it, then the hand edits."""
+    inside, poly, bottom, top, gridinfo = closure(v, run_dir)
+    fl = floaters(v, run_dir, inside, gridinfo, top)
     drop = inside | fl
     n_hand = (0, 0)
-    if os.path.exists(f"{run}/manual.json"):
-        man = json.load(open(f"{run}/manual.json"))
+    if os.path.exists(f"{run_dir}/manual.json"):
+        man = json.load(open(f"{run_dir}/manual.json"))
         de, ke = np.array(man.get("delete", []), np.int64), np.array(man.get("keep", []), np.int64)
         drop[de] = True; drop[ke] = False; n_hand = (len(de), len(ke))
     label_drop.counts = dict(closure=int(inside.sum()), floaters=int(fl.sum()), hand_delete=n_hand[0], hand_keep=n_hand[1])
     return drop, int(inside.sum()), int(fl.sum())
 
 
-if __name__ == "__main__":
-    run, scene_ply, out_ply = sys.argv[1:4]
-    v = PlyData.read(scene_ply)["vertex"].data
-    drop, _, _ = label_drop(v, run)
-    PlyData([PlyElement.describe(v[~drop], "vertex")]).write(out_ply)
-    PlyData([PlyElement.describe(v[drop], "vertex")]).write(f"{run}/removed.ply")
-    c = label_drop.counts
-    print(f"[carve_labels] removed {int(drop.sum())} of {len(v)}: inside the closure {c['closure']}, floaters beside it {c['floaters']}, "
-          f"hand edits delete {c['hand_delete']} / keep {c['hand_keep']} -> {out_ply}")
+def run(c):
+    v = read_ply(c.ply)
+    drop, _, _ = label_drop(v, c.dir)
+    write_ply(v[~drop], f"{c.dir}/scene_carved.ply"); write_ply(v[drop], f"{c.dir}/removed.ply")
+    n = label_drop.counts
+    print(f"[carve] removed {int(drop.sum())} of {len(v)}: inside the closure {n['closure']}, floaters beside it {n['floaters']}, "
+          f"hand edits delete {n['hand_delete']} / keep {n['hand_keep']} -> {c.dir}/scene_carved.ply")

@@ -1,0 +1,22 @@
+[
+ {
+  "id": "A01",
+  "ply": "物品摆放测试/A01/rep1/filled_02.ply",
+  "pano": "物品摆放测试/A01/rep1/pano.jpg"
+ },
+ {
+  "id": "C24",
+  "ply": "物品摆放测试/C24/rep1/filled_01.ply",
+  "pano": "物品摆放测试/C24/rep1/pano.jpg"
+ },
+ {
+  "id": "J02",
+  "ply": "物品摆放测试/J02/high/filled_02.ply",
+  "pano": "物品摆放测试/J02/high/pano.jpg"
+ },
+ {
+  "id": "J03",
+  "ply": "物品摆放测试/J03/high/filled_01.ply",
+  "pano": "物品摆放测试/J03/high/pano.jpg"
+ }
+]
