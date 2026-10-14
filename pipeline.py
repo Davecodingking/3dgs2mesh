@@ -15,7 +15,7 @@ Scenes are listed in scenes/index.json, their objects in scenes/<scene>.json; an
 its progress to runs/<run>/status.json. Every step runs in its own process with the conda env it needs; this file only
 uses the standard library, so any python 3 can run it.
 """
-import argparse, collections, fcntl, json, math, os, re, signal, subprocess, sys, time
+import argparse, collections, datetime, fcntl, json, math, os, re, signal, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ENV = {"sam3d": "/home/ubuntu/miniforge3/envs/sam3d/bin/python",   # SAM 3D Objects, gsplat, nvdiffrast, pyrender
@@ -46,7 +46,7 @@ CHILD_ENV = dict(CUDA_DEVICE_ORDER="PCI_BUS_ID", OMP_NUM_THREADS="8", MKL_NUM_TH
 
 
 def log(msg): print(f"[pipeline] {msg}", flush=True)
-def now(): return time.strftime("%Y-%m-%dT%H:%M:%S")
+def now(): return datetime.datetime.now().astimezone().isoformat(timespec="seconds")   # with the offset: the page compares it with its own clock
 
 
 # ---------------------------------------------------------------- files: scenes, objects, status (written atomically: the page polls them)
